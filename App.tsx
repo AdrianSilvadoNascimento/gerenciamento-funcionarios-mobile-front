@@ -1,11 +1,28 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StatusBar, StyleSheet, Text, View } from 'react-native'
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer } from '@react-navigation/native'
+
+import { Loading } from './src/Loading'
+import Home from './src/components/Home'
+
+const Stack = createNativeStackNavigator()
 
 export default function App() {
+  // const bla: boolean = false
+  // if (bla) {
+  //   return (
+  //     <Loading />
+  //   )  
+  // }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-    </View>
-  );
+    <NavigationContainer>
+      <Stack.Navigator>
+        <Stack.Screen name="Home" component={Home}/>
+      </Stack.Navigator>
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
+    </NavigationContainer>
+  )
 }
 
 const styles = StyleSheet.create({
@@ -15,4 +32,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
+})
