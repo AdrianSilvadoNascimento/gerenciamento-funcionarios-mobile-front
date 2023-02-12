@@ -1,35 +1,32 @@
-import { StatusBar, StyleSheet, Text, View } from 'react-native'
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StatusBar } from 'react-native'
+import { useFonts, NotoSerifAhom_400Regular } from '@expo-google-fonts/noto-serif-ahom'
 import { NavigationContainer } from '@react-navigation/native'
+import { createNativeStackNavigator } from '@react-navigation/native-stack'
 
 import { Loading } from './src/Loading'
-import Home from './src/components/Home'
+import Login from './src/screens/Login'
+import Home from './src/screens/Home'
 
 const Stack = createNativeStackNavigator()
 
 export default function App() {
-  // const bla: boolean = false
-  // if (bla) {
-  //   return (
-  //     <Loading />
-  //   )  
-  // }
+  const [fontsLoaded] = useFonts({
+    NotoSerifAhom_400Regular,
+  })
+  
+  if (!fontsLoaded) {
+    return (
+      <Loading />
+    )
+  }
 
   return (
     <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Home" component={Home}/>
+      <Stack.Navigator initialRouteName='Login' screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="Home" component={Home} />
       </Stack.Navigator>
       <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
     </NavigationContainer>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-})
