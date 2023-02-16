@@ -1,26 +1,57 @@
 import { useState } from 'react'
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 
 interface FuncionarioProps {
   nomeFuncionario: string
-  horasATrabalhar: string
+  horaInicioExpediente: Date
+  horaFinalExpediente: Date
 }
 
-export function FuncionarioList({ nomeFuncionario, horasATrabalhar }: FuncionarioProps) {
+export function FuncionarioList({
+  nomeFuncionario,
+  horaInicioExpediente,
+  horaFinalExpediente
+}: FuncionarioProps) {
   const [time, setTime] = useState('')
+  const [horaInicio, setHoraInicio] = useState<Date>(new Date(horaInicioExpediente))
+  const [horaFinal, setHoraFinal] = useState<Date>(new Date(horaFinalExpediente))
+  
+  const timeCounter = setInterval(timer, 1000)
   
   function timer() {
     const today = new Date()
     const hora = today.getHours()
-    const horas = parseInt(horasATrabalhar)
+    const inicio = horaInicio.getHours()
+    const final = horaFinal.getHours()
+    let minutoInicio = horaInicio.getMinutes()
+    let minutoFinal = horaFinal.getMinutes()
+    let segundosInicio = horaInicio.getSeconds()
+    let segundosFinal = horaFinal.getSeconds()
+
+    minutoInicio = assertZeros(minutoInicio)
+    minutoFinal = assertZeros(minutoFinal)
+    segundosInicio = assertZeros(segundosInicio)
+    segundosFinal = assertZeros(segundosFinal)
     
+    let segundos = today.getSeconds()
     let minutos = today.getMinutes()
     minutos = assertZeros(minutos)
+    segundos = assertZeros(segundos)
 
     let counter: string = ''
-    if (hora === horas) {
-      counter = `${hora}:${minutos}`
+    if (hora === inicio && minutos === minutoInicio) {
+      counter = `${hora}:${minutos}:${segundos}`
+    } else if (hora > inicio && minutos > minutoInicio) {
+      counter = `${hora}:${minutos}:${segundos}`
+    } else if (hora > final && minutos > minutoFinal) {
+      counter = `${final}:${minutoFinal}:${segundosFinal}`
+      clearInterval(timeCounter)
+    } else {
+      counter = `${inicio}:${minutoInicio}:${segundosInicio}`
+      clearInterval(timeCounter)
     }
+
     setTime(counter)
   }
 
@@ -30,8 +61,6 @@ export function FuncionarioList({ nomeFuncionario, horasATrabalhar }: Funcionari
     }
     return val
   }
-
-  setInterval(timer, 1000)
   
   return (
     <View style={style.container}>
@@ -43,9 +72,9 @@ export function FuncionarioList({ nomeFuncionario, horasATrabalhar }: Funcionari
         {time}
       </Text>
 
-      <Text style={style.text}>
-        O
-      </Text>
+      <TouchableOpacity style={style.settings}>
+        <Ionicons name="settings-outline" size={24} color="black" />
+      </TouchableOpacity>
     </View>
   )
 }
@@ -66,6 +95,10 @@ const style = StyleSheet.create({
 
   text: {
     textAlignVertical: 'center',
+  },
+
+  settings: {
+    alignSelf: 'center'
   },
 
   timer: {

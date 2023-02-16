@@ -8,78 +8,182 @@ import {
   TouchableOpacity,
 } from 'react-native'
 import { useForm } from 'react-hook-form'
+import DateTimePicker, { DateTimePickerAndroid, DateTimePickerEvent } from '@react-native-community/datetimepicker'
+
 import { AXIOS } from '../lib/axios'
 import { FormInput } from './FormInput'
+import { Loading } from '../Loading'
 
-interface FuncionarioProps {
-  nomeFuncionario: string
-  telefoneContato: string
-  posicaoFuncionario: string
-  turnoFuncionario: string
-  horasFuncionario: string
-}
+DateTimePickerAndroid.dismiss('time')
 
-export function NovoFuncionario({ navigation }: any) {
-  const [loading, setLoading] = useState(true)
+export function NovoFuncionario() {
+  const [loading, setLoading] = useState(false)
   const {
     register,
     setValue,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm()
+  const [dateInicio, setDateInicio] = useState<Date>(new Date())
+  const [dateFinal, setDateFinal] = useState<Date>(new Date())
+  const [horaInicio, setHoraInicio] = useState(0)
+  const [minutosInicio, setMinutosInicio] = useState(0)
+  const [horaFinal, setHoraFinal] = useState(0)
+  const [minutosFinal, setMinutosFinal] = useState(0)
+  const [showTimeInicio, setShowTimeInicio] = useState(false)
+  const [showTimeFinal, setShowTimeFinal] = useState(false)
 
   useEffect(() => {
     register('nomeFuncionario')
-    register('telefoneContato')
+    register('sobrenomeFuncionario')
     register('posicaoFuncionario')
     register('turnoFuncionario')
-    register('horasFuncionario')
+    register('horaInicio')
+    register('horaFinal')
   }, [register])
 
-  const onSubmit = async (data: any) => {
-    const funcionario: FuncionarioProps = data
-    console.log('funcionario:', funcionario)
+  function onChange(event: DateTimePickerEvent, selectedHoraInicio: any) {
+    const horaInicialSelecionada: Date = selectedHoraInicio
+    setDateInicio(horaInicialSelecionada)
+    setHoraInicio(horaInicialSelecionada.getHours())
+    setMinutosInicio(horaInicialSelecionada.getMinutes())
+
+    setValue('horaInicio', dateInicio)
+
+    if (event.type === 'dismissed' || event.type === 'set') {
+      setShowTimeInicio(false)
+    }
+  }
+
+  function onChangeHoraFinal(event: DateTimePickerEvent, selectedHoraFinal: any) {
+    const horaFinalSelecionada: Date = selectedHoraFinal
+    setDateFinal(horaFinalSelecionada)
+    setHoraFinal(horaFinalSelecionada.getHours())
+    setMinutosFinal(horaFinalSelecionada.getMinutes())
+
+    setValue('horaFinal', dateFinal)
+
+    if (event.type === 'dismissed' || event.type === 'set') {
+      setShowTimeFinal(false)
+    }
+  }
+
+  function timePickerInicio() {
+    setShowTimeInicio(true)
+  }
+
+  function timePickerFinal() {
+    setShowTimeFinal(true)
+  }
+
+  /**
+   * 
+   * @param data - Dados do funcionário.
+   */
+  async function onSubmit(data: any) {
 
     try {
       setLoading(true)
 
       await AXIOS.post('/funcionario/cadastro/63e2c20b39840e2a25432bd4', {
-        nomeFuncionario: funcionario.nomeFuncionario,
-        telefoneContato: funcionario.telefoneContato,
+        nomeFuncionario: data.nomeFuncionario,
+        sobrenomeFuncionario: data.sobrenomeFuncionario,
+        posicaoFuncionario: data.posicaoFuncionario,
+        turnoFuncionario: data.turnoFuncionario,
+        horaInicio: data.horaInicio,
+        horaFinal: data.horaFinal,
       })
-
-      await navigation.navigate('Home')
-
-      
     } catch (error) {
       console.error('error:', error)
       Alert.alert('Ops', 'Não foi possível cadastrar novo funcionário')
     } finally {
       setLoading(false)
+      reset([
+        'nomeFuncionario',
+        'sobrenomeFuncionario',
+        'posicaoFuncionario',
+        'turnoFuncionario',
+        'horaInicio',
+        'horaFinal',
+      ])
+
+      setHoraInicio(0)
+      setHoraFinal(0)
+      setMinutosInicio(0)
+      setMinutosFinal(0)
     }
+  }
+
+  if (loading) {
+    return (
+      <Loading />
+    )
   }
 
   return (
     <View style={styles.container}>
       <ScrollView>
         <FormInput 
-          placeholder='Digite o nome do funcionário'
+          placeholder='Nome do funcionário'
           onChangeText={(text: string) => setValue('nomeFuncionario', text)} />
         <FormInput 
-          placeholder='Digite o número de telefone'
-          onChangeText={(text: string) => setValue('telefoneContato', text)} />
+          placeholder='Sobrenome do funcionário'
+          onChangeText={(text: string) => setValue('sobrenomeFuncionario', text)} />
         <FormInput 
-          placeholder='Digite a posição do funcionário'
+          placeholder='Posição do funcionário'
           onChangeText={(text: string) => setValue('posicaoFuncionario', text)} />
         <FormInput 
-          placeholder='Digite o turno'
+          placeholder='Turno'
           onChangeText={(text: string) => setValue('turnoFuncionario', text)} />
-        <FormInput 
-          placeholder='Digite a quantidade de horas'
-          onChangeText={(text: string) => setValue('horasFuncionario', text)} />
+
+        <TouchableOpacity 
+          style={styles.input}
+          onPress={timePickerInicio}
+        >
+          <Text style={styles.input.text}>
+            {
+              minutosInicio !== 0 
+              ? `${horaInicio}:${minutosInicio}`
+              : 'Informe hora inicial do expediente'
+            }
+          </Text>
+          {
+            showTimeInicio &&
+            <DateTimePicker 
+              value={dateInicio}
+              onChange={onChange}
+              is24Hour={true}
+              mode='time'
+              testID='dateTimePicker'
+            />
+          }
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.input}
+          onPress={timePickerFinal}>
+          <Text style={styles.input.text}>
+            {
+              minutosFinal !== 0 
+              ? `${horaFinal}:${minutosFinal}`
+              : 'Informe hora final do expediente'
+            }
+          </Text>
+          {
+            showTimeFinal &&
+            <DateTimePicker 
+              value={dateFinal}
+              onChange={onChangeHoraFinal}
+              is24Hour={true}
+              mode='time'
+              testID='dateTimePicker'
+            />
+          }
+        </TouchableOpacity>
+        
 
         <TouchableOpacity
-          activeOpacity={0.7}
           style={styles.entrar}
           onPress={handleSubmit(onSubmit)}
         >
@@ -95,6 +199,21 @@ export function NovoFuncionario({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
+  },
+
+  input: {
+    width: 300,
+    height: 48,
+    padding: 12,
+    paddingLeft: 20,
+    textAlign: 'left',
+    backgroundColor: '#F0F0F0',
+    marginBottom: 24,
+    borderRadius: 10,
+
+    text: {
+      color: '#8E8E8E'
+    }
   },
 
   entrar: {
