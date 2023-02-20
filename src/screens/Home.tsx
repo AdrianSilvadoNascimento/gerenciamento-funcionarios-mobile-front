@@ -1,12 +1,21 @@
 import { useCallback, useState } from 'react'
-import { View, ScrollView, Text, StyleSheet, TouchableOpacity, Alert } from "react-native"
+import { 
+  View, 
+  ScrollView, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Alert,
+} from "react-native"
 import { AXIOS } from "../lib/axios"
-import { useFocusEffect } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 
 import { FuncionarioList } from '../components/FuncionarioList'
 import { Loading } from '../Loading'
+import Header from '../components/Header'
 
 interface FuncionariosProps {
+  id: string
   nomeFuncionario: string
   sobrenomeFuncionario: string
   posicaoFuncionario: string
@@ -15,7 +24,8 @@ interface FuncionariosProps {
   horaFinal: Date
 }
 
-export default function Home({ navigation }: any) {
+export default function Home({ navigation, isFirstTime = true }: any) {
+  const { navigate } = useNavigation()
   const [loading, setLoading] = useState(false)
   const [nomeEmpresa, setNomeEmpresa] = useState('')
   const [funcionarios, setFuncionarios] = useState<FuncionariosProps[]>([])
@@ -40,17 +50,13 @@ export default function Home({ navigation }: any) {
   
   return (
     <View style={style.container}>
-      <Text style={style.header}>
-        {
-          nomeEmpresa
-          ? nomeEmpresa
-          : 'Nome da Empresa'
-        }
-      </Text>
+      <View style={style.header}>
+        <Header />
+      </View>
 
       <TouchableOpacity
         style={style.button}
-        onPress={() => navigation.navigate('FuncionarioForm')}
+        onPress={() => navigate('funcionarioForm')}
       >
         <Text style={style.button.text}>
           + Novo Funcionário
@@ -58,6 +64,7 @@ export default function Home({ navigation }: any) {
       </TouchableOpacity>
 
       {
+        isFirstTime &&
         loading 
         ? <Loading />
         : funcionarios 
@@ -66,7 +73,8 @@ export default function Home({ navigation }: any) {
             {
               funcionarios.map((funcionario, index) => (
                 <FuncionarioList 
-                  key={`${funcionario.nomeFuncionario}-${index}`} 
+                  key={`${funcionario.nomeFuncionario}-${index}`}
+                  id={funcionario.id}
                   nomeFuncionario={funcionario.nomeFuncionario} 
                   horaInicioExpediente={funcionario.horaInicio}
                   horaFinalExpediente={funcionario.horaFinal}
@@ -84,12 +92,12 @@ const style = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 100
+    backgroundColor: '#FFF',
   },
 
   header: {
-    fontSize: 32,
-    marginBottom: 50,
+    width: '100%',
+    height: 120,
   },
 
   funcionarioListBg: {
@@ -100,10 +108,8 @@ const style = StyleSheet.create({
   },
 
   button: {
-    paddingTop: 12,
-    paddingBottom: 12,
-    paddingLeft: 15,
-    paddingRight: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 15,
     backgroundColor: '#AFDDFF',
     borderRadius: 10,
     marginBottom: 21,
