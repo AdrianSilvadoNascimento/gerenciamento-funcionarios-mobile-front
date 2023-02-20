@@ -1,18 +1,22 @@
 import { useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { useNavigation } from '@react-navigation/native'
 
 interface FuncionarioProps {
+  id: string,
   nomeFuncionario: string
   horaInicioExpediente: Date
   horaFinalExpediente: Date
 }
 
 export function FuncionarioList({
+  id,
   nomeFuncionario,
   horaInicioExpediente,
   horaFinalExpediente
 }: FuncionarioProps) {
+  const { navigate } = useNavigation()
   const [time, setTime] = useState('')
   const [horaInicio, setHoraInicio] = useState<Date>(new Date(horaInicioExpediente))
   const [horaFinal, setHoraFinal] = useState<Date>(new Date(horaFinalExpediente))
@@ -39,16 +43,13 @@ export function FuncionarioList({
     minutos = assertZeros(minutos)
     segundos = assertZeros(segundos)
 
-    let counter: string = ''
-    if (hora === inicio && minutos === minutoInicio) {
+    let counter: string = `${hora}:${minutos}:${segundos}`
+    if (hora > inicio && minutos > minutoInicio) {
       counter = `${hora}:${minutos}:${segundos}`
-    } else if (hora > inicio && minutos > minutoInicio) {
-      counter = `${hora}:${minutos}:${segundos}`
-    } else if (hora > final && minutos > minutoFinal) {
+    }
+
+    if (hora > final && minutos > minutoFinal) {
       counter = `${final}:${minutoFinal}:${segundosFinal}`
-      clearInterval(timeCounter)
-    } else {
-      counter = `${inicio}:${minutoInicio}:${segundosInicio}`
       clearInterval(timeCounter)
     }
 
@@ -63,16 +64,19 @@ export function FuncionarioList({
   }
   
   return (
-    <View style={style.container}>
+    <View style={[style.container, style.elevação, style.shadowProp]}>
       <Text style={style.text}>
-        {nomeFuncionario.substring(0, 6)}
+        {nomeFuncionario}
       </Text>
       
       <Text style={[style.timer, style.text]}>
         {time}
       </Text>
 
-      <TouchableOpacity style={style.settings}>
+      <TouchableOpacity 
+        style={style.settings}
+        onPress={() => navigate('funcionarioDetails', { id: id.toString() }) }
+      >
         <Ionicons name="settings-outline" size={24} color="black" />
       </TouchableOpacity>
     </View>
@@ -91,10 +95,24 @@ const style = StyleSheet.create({
     marginBottom: 19,
     backgroundColor: '#fff',
     justifyContent: 'space-between',
+    borderTopEndRadius: 10,
+    borderTopStartRadius: 10,
   },
 
   text: {
     textAlignVertical: 'center',
+  },
+
+  elevação: {
+    elevation: 8,
+    shadowColor:'#000',
+  },
+
+  shadowProp: {
+    shadowColor: '#171717', 
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
 
   settings: {

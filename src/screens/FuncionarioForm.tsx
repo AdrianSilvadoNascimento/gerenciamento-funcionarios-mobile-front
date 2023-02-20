@@ -1,23 +1,23 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, ScrollView } from 'react-native'
 
-import BackButton from '../components/BackButton'
 import { NovoFuncionario } from '../components/NovoFuncionario'
+import Header from '../components/Header'
+import BackButton from '../components/BackButton'
 
 export function FuncionarioForm() {  
   return (
     <View style={style.container}>
-      <View style={style.backButton}>
-        <BackButton />
-      </View>
-      <View style={style.headerContainer}>
-        <Text style={style.header}>
-          Cadastro de Funcionários
-        </Text>
+      <View style={style.header}>
+        <Header />
       </View>
 
-      <View>
+      <Text style={style.text}>Funcionário - Adição</Text>
+
+      <BackButton />
+
+      <ScrollView>
         <NovoFuncionario />
-      </View>
+      </ScrollView>
     </View>
   )
 }
@@ -25,22 +25,21 @@ export function FuncionarioForm() {
 const style = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF'
-  },
-
-  backButton: {
-    paddingTop: 80,
-  },
-
-  headerContainer: {
-    width: 200,
-    alignSelf: 'center',
-    marginBottom: 71,
+    backgroundColor: '#FFF',
   },
 
   header: {
-    paddingTop: 20,
+    width: '100%',
+    height: 120,
+  },
+
+  text: {
+    alignContent: 'center',
+    justifyContent: 'center',
     textAlign: 'center',
-    fontSize: 32,
+    marginTop: 65,
+    letterSpacing: 2,
+    fontSize: 16,
   }
+
 })

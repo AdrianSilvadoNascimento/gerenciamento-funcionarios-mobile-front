@@ -14,7 +14,7 @@ export default function BackButton() {
       <Feather 
         name="arrow-left"
         size={32}
-        color="#fff"
+        color="#6F6F6F"
       />
     </TouchableOpacity>
   )
@@ -23,13 +23,15 @@ export default function BackButton() {
 const style = StyleSheet.create({
   button: {
     width: 72,
-    paddingTop: 12,
-    paddingBottom: 12,
-    paddingLeft: 15,
-    paddingRight: 15,
+    position: 'relative',
+    left: 0,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
     borderTopRightRadius: 10,
     borderBottomRightRadius: 10,
-    backgroundColor: '#000'
+    backgroundColor: '#F0F0F0',
+    marginTop: 25,
+    marginBottom: 25,
   }
 })
 
