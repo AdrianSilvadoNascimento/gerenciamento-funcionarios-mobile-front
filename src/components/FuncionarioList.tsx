@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+
+import { Ionicons } from '@expo/vector-icons'
+import { AXIOS } from '../lib/axios'
+import { assertZeros } from '../util/assertZeros'
 
 interface FuncionarioProps {
   id: string,
@@ -20,7 +23,8 @@ export function FuncionarioList({
   const [time, setTime] = useState('')
   const [horaInicio, setHoraInicio] = useState<Date>(new Date(horaInicioExpediente))
   const [horaFinal, setHoraFinal] = useState<Date>(new Date(horaFinalExpediente))
-  
+  const [horasAdicionadas, setHorasAdicionadas] = useState(false)
+
   const timeCounter = setInterval(timer, 1000)
   
   function timer() {
@@ -44,23 +48,32 @@ export function FuncionarioList({
     segundos = assertZeros(segundos)
 
     let counter: string = `${hora}:${minutos}:${segundos}`
-    if (hora > inicio && minutos > minutoInicio) {
+    if (
+      (hora >= inicio && minutos >= minutoInicio) &&
+      (hora <= final && minutos <= minutoFinal)
+    ) {
       counter = `${hora}:${minutos}:${segundos}`
-    }
-
-    if (hora > final && minutos > minutoFinal) {
-      counter = `${final}:${minutoFinal}:${segundosFinal}`
+      setTime(counter)
+    } else if (hora >= final && minutos >= minutoFinal && !segundos) {
       clearInterval(timeCounter)
-    }
+      counter = `${final}:${minutoFinal}:${segundosFinal}`
+      setTime(counter)
 
-    setTime(counter)
+      return
+    }
   }
 
-  function assertZeros(val: any) {
-    if (val < 10) {
-      val = `0${val}`
+  async function atualizarHorasTrabalhadas() {
+    try {
+      await AXIOS.post(`/funcionario/trabalho/${id}`, {
+        horaInicio: horaInicio,
+        horaFinal: horaFinal,
+      })
+      Alert.alert('Horas trabalhadas adicionadas com sucesso!')
+    } catch (error) {
+      console.error('error:', error)
+      Alert.alert('Ops', 'Não foi possível adicionar horas trabalhadas do funcionário')
     }
-    return val
   }
   
   return (

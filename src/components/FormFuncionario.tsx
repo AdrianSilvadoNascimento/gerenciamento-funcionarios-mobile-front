@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
   View,
-  ScrollView,
   Alert,
   StyleSheet,
   Text,
@@ -13,30 +12,51 @@ import DateTimePicker, { DateTimePickerAndroid, DateTimePickerEvent } from '@rea
 import { AXIOS } from '../lib/axios'
 import { FormInput } from './FormInput'
 import { Loading } from '../Loading'
+import { assertZeros } from '../util/assertZeros'
+import { useNavigation } from '@react-navigation/native'
 DateTimePickerAndroid.dismiss('time')
 
-export function NovoFuncionario() {
+interface FuncionarioProps {
+  nomeFuncionario?: string
+  sobrenomeFuncionario?: string
+  cargoFuncionario?: string
+  turnoFuncionario?: string
+  horaInicio?: string
+  horaFinal?: string
+}
+
+export function FormFuncionario({
+  nomeFuncionario,
+  sobrenomeFuncionario,
+  cargoFuncionario,
+  turnoFuncionario,
+  horaInicio,
+  horaFinal,
+}: FuncionarioProps) {
+  const { navigate } = useNavigation()
   const [loading, setLoading] = useState(false)
   const {
     register,
     setValue,
     handleSubmit,
-    control,
     reset,
   } = useForm()
   const [dateInicio, setDateInicio] = useState<Date>(new Date())
   const [dateFinal, setDateFinal] = useState<Date>(new Date())
-  const [horaInicio, setHoraInicio] = useState(0)
+  const [doInicio, setHoraInicio] = useState(0)
   const [minutosInicio, setMinutosInicio] = useState(0)
-  const [horaFinal, setHoraFinal] = useState(0)
+  const [doFinal, setHoraFinal] = useState(0)
   const [minutosFinal, setMinutosFinal] = useState(0)
   const [showTimeInicio, setShowTimeInicio] = useState(false)
   const [showTimeFinal, setShowTimeFinal] = useState(false)
+  
+  const [msgInicio, setMsgInicio] = useState('Informe hora inicial do expediente')
+  const [msgFinal, setMsgFinal] = useState('Informe hora final do expediente')
 
   useEffect(() => {
     register('nomeFuncionario')
     register('sobrenomeFuncionario')
-    register('posicaoFuncionario')
+    register('cargoFuncionario')
     register('turnoFuncionario')
     register('horaInicio')
     register('horaFinal')
@@ -50,15 +70,22 @@ export function NovoFuncionario() {
    */
   function onChangeHoraInicio(event: DateTimePickerEvent, selectedHoraInicio: any) {
     const horaInicialSelecionada: Date = selectedHoraInicio
+    let horas = horaInicialSelecionada.getHours()
+    let minutos = horaInicialSelecionada.getMinutes()
+    horas = assertZeros(horas)
+    minutos = assertZeros(minutos)
+    
     horaInicialSelecionada.setSeconds(0)
     setDateInicio(horaInicialSelecionada)
-    setHoraInicio(horaInicialSelecionada.getHours())
-    setMinutosInicio(horaInicialSelecionada.getMinutes())
+    setHoraInicio(horas)
+    setMinutosInicio(minutos)
 
     setValue('horaInicio', dateInicio)
 
+    setMsgInicio(`${horas}:${minutos}:00`)
+
     if (event.type === 'dismissed' || event.type === 'set') {
-      setShowTimeInicio(false)
+      setShowTimeInicio(!showTimeInicio)
     }
   }
 
@@ -66,19 +93,26 @@ export function NovoFuncionario() {
    * Altera e seta o valor da hora final.
    * 
    * @param { DateTimePickerEvent } event - Evento do date picker.
-   * @param { any } selectedHoraInicio'- Hora selecionada.
+   * @param { any } selectedHoraFinal - Hora selecionada.
    */
   function onChangeHoraFinal(event: DateTimePickerEvent, selectedHoraFinal: any) {
     const horaFinalSelecionada: Date = selectedHoraFinal
+    let horas = horaFinalSelecionada.getHours()
+    let minutos = horaFinalSelecionada.getMinutes()
+    horas = assertZeros(horas)
+    minutos = assertZeros(minutos)
+    
     horaFinalSelecionada.setSeconds(0)
     setDateFinal(horaFinalSelecionada)
-    setHoraFinal(horaFinalSelecionada.getHours())
-    setMinutosFinal(horaFinalSelecionada.getMinutes())
+    setHoraFinal(horas)
+    setMinutosFinal(minutos)
 
     setValue('horaFinal', dateFinal)
 
-    if (event.type === 'dismissed' || event.type === 'set') {
-      setShowTimeFinal(false)
+    setMsgFinal(`${horas}:${minutos}:00`)
+
+    if ((event.type === 'dismissed') || (event.type === 'set')) {
+      setShowTimeFinal(!showTimeFinal)
     }
   }
 
@@ -108,11 +142,17 @@ export function NovoFuncionario() {
       await AXIOS.post('/funcionario/cadastro/63e2c20b39840e2a25432bd4', {
         nomeFuncionario: data.nomeFuncionario,
         sobrenomeFuncionario: data.sobrenomeFuncionario,
-        posicaoFuncionario: data.posicaoFuncionario,
+        cargoFuncionario: data.cargoFuncionario,
         turnoFuncionario: data.turnoFuncionario,
         horaInicio: data.horaInicio,
         horaFinal: data.horaFinal,
       })
+
+      Alert.alert('Funcionário adicionado com sucesso!')
+
+      setTimeout(() => {
+        navigate('home')
+      }, 3000)
     } catch (error) {
       console.error('error:', error)
       Alert.alert('Ops', 'Não foi possível cadastrar novo funcionário')
@@ -121,7 +161,7 @@ export function NovoFuncionario() {
       reset([
         'nomeFuncionario',
         'sobrenomeFuncionario',
-        'posicaoFuncionario',
+        'cargoFuncionario',
         'turnoFuncionario',
         'horaInicio',
         'horaFinal',
@@ -145,18 +185,22 @@ export function NovoFuncionario() {
       <FormInput
         rules={{ required: { value: true, message: 'Nome é obrigatório' }}}
         placeholder='Nome do funcionário'
+        value={nomeFuncionario}
         onChangeText={(text: string) => setValue('nomeFuncionario', text)} />
       <FormInput
         rules={{ required: { value: true, message: 'Sobrenome é obrigatório' }}}
         placeholder='Sobrenome do funcionário'
+        value={sobrenomeFuncionario}
         onChangeText={(text: string) => setValue('sobrenomeFuncionario', text)} />
       <FormInput
-        rules={{ required: { value: true, message: 'Posição do funcionário é obrigatória' }}}
-        placeholder='Posição do funcionário'
+        rules={{ required: { value: true, message: 'Cargo do funcionário é obrigatória' }}}
+        placeholder='Cargo do funcionário'
+        value={cargoFuncionario}
         onChangeText={(text: string) => setValue('posicaoFuncionario', text)} />
       <FormInput
         rules={{ required: { value: true, message: 'Turno do funcionário é obrigatório' }}}
         placeholder='Turno'
+        value={turnoFuncionario}
         onChangeText={(text: string) => setValue('turnoFuncionario', text)} />
 
       <TouchableOpacity 
@@ -164,11 +208,7 @@ export function NovoFuncionario() {
         onPress={timePickerInicio}
       >
         <Text style={styles.input.text}>
-          {
-            minutosInicio !== 0 
-            ? `${horaInicio}:${minutosInicio}`
-            : 'Informe hora inicial do expediente'
-          }
+          { msgInicio }
         </Text>
         {
           showTimeInicio &&
@@ -186,11 +226,7 @@ export function NovoFuncionario() {
         style={styles.input}
         onPress={timePickerFinal}>
         <Text style={styles.input.text}>
-          {
-            minutosFinal !== 0 
-            ? `${horaFinal}:${minutosFinal}`
-            : 'Informe hora final do expediente'
-          }
+          { msgFinal }
         </Text>
         {
           showTimeFinal &&

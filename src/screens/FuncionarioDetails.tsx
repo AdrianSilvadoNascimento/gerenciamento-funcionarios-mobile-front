@@ -1,21 +1,18 @@
 import { useRoute } from '@react-navigation/native'
 import { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, Alert, ScrollView, TouchableOpacity } from 'react-native'
-
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons'
-import { Calendar, LocaleConfig } from 'react-native-calendars'
+import { View, Text, StyleSheet, Alert } from 'react-native'
 
 import Header from '../components/Header'
 import { AXIOS } from '../lib/axios'
 import BackButton from '../components/BackButton'
 import { Loading } from '../Loading'
+import FuncionarioInfo from '../components/FuncionarioInfo'
 
 interface Params {
   id: string
 }
 
-interface Funcionario {
+interface FuncionarioProps {
   nomeFuncionario: string
   sobrenomeFuncionario: string
   posicaoFuncionario: string
@@ -24,33 +21,24 @@ interface Funcionario {
   horaFinal: Date
 }
 
-LocaleConfig.locales['fr'] = {
-  monthNames: [
-    'Janeiro',
-    'Fevereiro',
-    'Março',
-    'Abril',
-    'Maio',
-    'Junho',
-    'Julho',
-    'Agosto',
-    'Setembro',
-    'Outubro',
-    'Novembro',
-    'Dezembro'
-  ],
-  monthNamesShort: ['Jan.', 'Feb.', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul.', 'Ago', 'Set.', 'Out.', 'Nov.', 'Dez.'],
-  dayNames: ['Domingo', 'Segunda-Feira', 'Terça-Feira', 'Quarta-Feira', 'Quinta-Feira', 'Sexta-Feira', 'Sábado'],
-  dayNamesShort: ['Dom.', 'Seg.', 'Ter.', 'Qua.', 'Qui.', 'Sex.', 'Sab.'],
-  today: "Hoje"
-};
-LocaleConfig.defaultLocale = 'fr';
+type DiasTrabalhadosProps = {
+  dia: Date
+  horasNoDia: number
+}[]
+
+type EventosProps = {
+  dataInicio: Date,
+  dataFinal: Date,
+  selecionado: boolean,
+  comecoDia: boolean,
+  finalDia: boolean,
+}[]
 
 export default function FuncionarioDetails() {
-  const [funcionario, setFuncionario] = useState<Funcionario | null>(null)
+  const [funcionario, setFuncionario] = useState<FuncionarioProps>()
+  const [diasTrabalhados, setDiasTrabalhados] = useState<DiasTrabalhadosProps>()
+  const [eventos, setEventos] = useState<EventosProps>()
   const [isLoading, setLoading] = useState(false)
-  const [startTime, setStartTime] = useState('8:30')
-  const [endTime, setEndTime] = useState('18:30')
   const route = useRoute()
   const { id } = route.params as Params
 
@@ -58,21 +46,17 @@ export default function FuncionarioDetails() {
     try {
       setLoading(true)
       
-      const res = await AXIOS.get(`/funcionario/search/${id}`)
-      setFuncionario(res.data)      
+      const res = await AXIOS.get(`/funcionario/${id}`)
+      const trabalhados: DiasTrabalhadosProps = res.data.diasTrabalhados
+      const eventos: EventosProps = res.data.eventos
+      setFuncionario(res.data.funcionario)
+      setDiasTrabalhados(trabalhados)
+      setEventos(eventos)
     } catch (error) {
       console.error('error:', error)
       Alert.alert('Ops', 'Não foi possível carregar os dados do funcionário')
     } finally {
       setLoading(false)
-
-      if (funcionario) {
-        const inicio = new Date(funcionario.horaInicio)
-        const final = new Date(funcionario.horaFinal)
-  
-        setStartTime(`${inicio.getHours()}:${inicio.getMinutes()}`)
-        setEndTime(`${final.getHours()}:${final.getMinutes()}`)
-      }
     }  
   }
   
@@ -86,36 +70,25 @@ export default function FuncionarioDetails() {
         <Header />
       </View>
       
-      <Text style={style.text}>Funcionário - Detalhes</Text>
+      <Text style={style.text}>Informações do Funcionário</Text>
 
       <BackButton />
 
-        <Text style={style.name}>{ funcionario?.nomeFuncionario } { funcionario?.sobrenomeFuncionario }</Text>
         {
           isLoading
           ? <Loading />
-          : <ScrollView style={ style.infoBg }>
-              <View style={style.actions}>
-                <TouchableOpacity>
-                  <FontAwesomeIcon style={{ marginRight: 30, color: '#46A6FF' }} size={32} icon={ faPenToSquare } />
-                </TouchableOpacity>
-
-                <TouchableOpacity>
-                  <FontAwesomeIcon style={{ color: '#FF4651' }} size={32} icon={ faTrash } />
-                </TouchableOpacity>
-              </View>
-              <View style={style.infos}>
-                <Text style={style.infos.text}>Turno: { funcionario?.turnoFuncionario }</Text>
-                <Text style={style.infos.text}>Expediente: { startTime } - { endTime }</Text>
-              </View>
-
-              <View style={style.calendar}>
-                <Calendar
-                  initialDate={new Date().toISOString()}
-                  enableSwipeMonths={true}
-                />
-              </View>
-            </ScrollView>
+          : funcionario && diasTrabalhados && eventos &&
+          <>
+            <Text style={style.name}>{ funcionario?.nomeFuncionario } { funcionario?.sobrenomeFuncionario }</Text>
+            <FuncionarioInfo 
+              funcionarioId={id}
+              turnoFuncionario={funcionario?.turnoFuncionario}
+              horaInicio={funcionario?.horaInicio}
+              horaFinal={funcionario?.horaFinal}
+              diasTrabalhados={diasTrabalhados}
+              eventos={eventos}
+            />
+          </>
         }
     </View>
   )
@@ -138,36 +111,6 @@ const style = StyleSheet.create({
     marginTop: 18,
     letterSpacing: 2,
     fontSize: 16,
-  },
-
-  infoBg: {
-    height: 550,
-    marginHorizontal: 15,
-    marginTop: 20,
-    borderRadius: 10,
-    backgroundColor: '#EEE'
-  },
-
-  infos: {
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-
-    text: {
-      fontSize: 18,
-      marginBottom: 10,
-    }
-  },
-
-  calendar: {
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-  },
-
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
   },
 
   text: {
